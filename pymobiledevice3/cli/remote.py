@@ -97,7 +97,7 @@ def rsd_info(service_provider: RemoteServiceDiscoveryService, color: bool):
 async def tunnel_task(
         service_provider: RemoteServiceDiscoveryService, secrets: TextIO,
         script_mode: bool = False, max_idle_timeout: float = MAX_IDLE_TIMEOUT,
-        protocol: TunnelProtocol = TunnelProtocol.QUIC) -> None:
+        protocol: TunnelProtocol = TunnelProtocol.QUIC, data_obj=None) -> None:
     if start_tunnel is None:
         raise NotImplementedError('failed to start the QUIC tunnel on your platform')
 
@@ -106,6 +106,9 @@ async def tunnel_task(
         logger.info('tunnel created')
         if script_mode:
             print(f'{tunnel_result.address} {tunnel_result.port}')
+            if data_obj is not None:
+                data_obj.data = tunnel_result
+                print("data_obj.data set")
         else:
             if secrets is not None:
                 print(click.style('Secrets: ', bold=True, fg='magenta') +
@@ -175,6 +178,14 @@ def cli_start_tunnel(udid: str, secrets: TextIO, script_mode: bool, max_idle_tim
     asyncio.run(tunnel_task(rsd, secrets, script_mode, max_idle_timeout=max_idle_timeout, protocol=protocol),
                 debug=True)
 
+def start_custom_tunnel(udid: str = None, secrets: TextIO = None, max_idle_timeout: float = MAX_IDLE_TIMEOUT, protocol: str = TunnelProtocol.QUIC.value, data_obj = None):
+    """ start quic tunnel """
+    protocol = TunnelProtocol(protocol)
+    if not verify_tunnel_imports():
+        return
+    rsd = select_device(udid)
+    asyncio.run(tunnel_task(rsd, secrets, True, max_idle_timeout=max_idle_timeout, protocol=protocol, data_obj=data_obj),
+                debug=False)
 
 @remote_cli.command('delete-pair')
 @click.option('--udid', help='UDID for a specific device to delete the pairing record of')
