@@ -105,10 +105,10 @@ async def tunnel_task(
                             protocol=protocol) as tunnel_result:
         logger.info('tunnel created')
         if script_mode:
-            print(f'{tunnel_result.address} {tunnel_result.port}')
+            #print(f'{tunnel_result.address} {tunnel_result.port}')
             if data_obj is not None:
                 data_obj.data = tunnel_result
-                print("data_obj.data set")
+                #print("data_obj.data set")
         else:
             if secrets is not None:
                 print(click.style('Secrets: ', bold=True, fg='magenta') +
