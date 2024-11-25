@@ -114,11 +114,14 @@ def rsd_info(service_provider: RemoteServiceDiscoveryService):
 async def tunnel_task(
         service, secrets: Optional[TextIO] = None, script_mode: bool = False,
         max_idle_timeout: float = MAX_IDLE_TIMEOUT, protocol: TunnelProtocol = TunnelProtocol.DEFAULT) -> None:
+    if isinstance(protocol, tuple):
+        protocol, device_info = protocol
     async with start_tunnel(
             service, secrets=secrets, max_idle_timeout=max_idle_timeout, protocol=protocol) as tunnel_result:
         logger.info('tunnel created')
         if script_mode:
             print(f'{tunnel_result.address} {tunnel_result.port}')
+            device_info.data = tunnel_result
         else:
             if user_requested_colored_output():
                 if secrets is not None:
@@ -199,6 +202,22 @@ def cli_start_tunnel(
             ConnectionType(connection_type), secrets, udid, script_mode, max_idle_timeout=max_idle_timeout,
             protocol=TunnelProtocol(protocol)), debug=True)
 
+@sudo_required
+def start_custom_tunnel(data_obj) -> None:
+    # Set defaults
+    connection_type = ConnectionType.USB.value
+    udid = None
+    secrets = None
+    script_mode = True
+    max_idle_timeout = MAX_IDLE_TIMEOUT
+    protocol = (TunnelProtocol(TunnelProtocol.DEFAULT.value), data_obj)
+    """ start tunnel """
+    if not verify_tunnel_imports():
+        return
+    asyncio.run(
+        start_tunnel_task(
+            ConnectionType(connection_type), secrets, udid, script_mode, max_idle_timeout=max_idle_timeout,
+            protocol=protocol), debug=False)
 
 @dataclasses.dataclass
 class RemotePairingManualPairingDevice:
